@@ -1,0 +1,28 @@
+/* loader.css */
+.loader {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    background-color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+  }
+  
+.loader img {
+    width: 100px;
+    height: 100px;
+    display: block;
+    margin: auto;
+  }
+
+  /* Center the loader */
+.centered-loader {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+}

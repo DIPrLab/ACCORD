@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/detection.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/actionconstraint.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/loader.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/demodashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/detectmodal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/simulator.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/demoConstraints.css') }}">
+
+    
+
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+
+    <title>ACCORD - Dashboard</title>
+</head>
+<body>
+    <header>
+        <center><h1>ACCORD: Constraint Driven Mediation for Conflicts in Cloud Services</h1></center>
+        <div class="user-info">
+            {{ username }} | <a href="{{ url_for('logout') }}">Logout</a>
+            <button id="refresh-btn" class="btn-refresh" onclick="refreshLogs()">Refresh Logs</button>
+            <div id="refresh_loader" class="loader centered-loader" style="display:none;">
+              <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="Loading...">
+            </div>
+        </div>
+    </header>
+    
+    <nav>
+        <ul>
+            <!-- <li><a href="#tab-1">Conflict Detection</a></li>
+            <li><a href="#tab-2">Action Constraints</a></li>
+            <li><a href="#tab-3">Demonstration</a></li> -->
+            <li><a href="#tab-4">Action Simulator</a></li>
+            <li><a href="#admin-tab-1">Action Constraints</a></li>
+            <li><a href="#admin-tab-2">Detection Engine</a></li>
+            {% if user_role == 'admin' %}           
+            <li><a href="#admin-tab-3">Register New User</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    
+
+    <main>
+        <!---- CONFLICT DETECTION ---------------------->
+        <!-- <div id="tab-1" class="tab-content">
+            <center><h2>Detect conflicts in the Cloud</h2></center>
+            <div class="filter-options">
+                <div class="filter-group">
+                  <label for="dropdown-1">Choose Action:</label>
+                  <select id="dropdown-1">
+                    <option value="Any">Any</option>
+                    <option value="Create">Create</option>
+                    <option value="Delete">Delete</option>
+                    <option value="Edit">Edit</option>
+                    <option value="Move">Move</option>
+                    <option value="Permission Change">Permission Change</option>
+                  </select>
+                </div>
+                
+                <div class="filter-group">
+                  <label for="dropdown-2">Choose Actor:</label>
+                  <select id="dropdown-2">
+                    {% for option in options_actor %}
+                    <option value="{{ option }}">{{ option }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                
+                <div class="filter-group">
+                  <label for="dropdown-3">Choose Document:</label>
+                  <select id="dropdown-3">
+                    {% for option in options_document %}
+                    <option value="{{ option }}">{{ option }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                
+                <div class="filter-buttons">
+                  <button id="filter-btn" onclick="detectConflicts()">Detect Conflicts</button>
+                  <button id="reset-btn" onclick="clearConflicts()">Reset</button>
+                </div>
+              </div>
+              
+
+              <p id="detection-label" style="display: none;"></p>
+              <div class="image-container">
+                <img src="{{ url_for('static', filename='img/conflictdetection.png') }}" alt="Conflict Detection Process">
+              </div>
+              
+              <div id="detect_loader" class="loader" style="display:none;">
+                <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="Loading...">
+              </div>
+
+              
+              <div id="logs-table-container" style="display: none;">
+                <table id="logs-table" class="conflicts-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Activity Time</th>
+                      <th>Action</th>
+                      <th>Document</th>
+                      <th>Actor</th>
+                      <th>Conflict</th>
+                      <th>Resolution</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                  </tbody>
+                </table>
+
+               
+              </div>  
+
+
+
+        </div> -->
+        
+        <!---- CONFLICT DETECTION END---------------------->
+
+
+
+         <!---- ACTION CONSTRAINTS---------------------->
+
+        <!-- <div id="tab-2" class="tab-content">
+            <center><h2>Add Action Constraints</h2></center>
+            <form>
+              <div class="grid">
+                <div class="item">
+                    <label for="document">Choose Document:</label>
+                    <select id="documentComboBox"></select>
+                </div>
+                <div class="item">
+                    <label for="action">Choose Action:</label>
+                    <select id="actionComboBox"></select>
+                </div>
+                <div class="item">
+                    <label for="actionType">Choose Action Type:</label>
+                    <select id="actionTypeComboBox"></select>
+                </div>
+                <div class="item">
+                    <label for="actor">Choose Target Actor:</label>
+                    <select id="actorComboBox"></select>
+                </div>
+                <div class="item">
+                    <label for="actionValue">Choose Action Value:</label>
+                    <select id="actionValueComboBox"></select>
+                </div>
+                <div class="item">
+                    <label for="comparator">Set Comparator:</label>
+                    <select id="comparatorBox"></select>
+                </div>
+                <div class="item">
+                    <label for="trueValue">Enter Allowed Values:</label>
+                    <input type="text" id="trueValueEdit" disabled>
+                </div>
+            </div>
+            
+            <div class="filter-buttons">
+                <button id="clearButton">Clear</button>
+                <button id="addConstraintButton">Add Constraint</button>
+            </div>
+            <div class="constraint">
+                <p id="constraintLabel"></p>
+            </div>
+          </form>
+            
+        </div> -->
+         <!---- ACTION CONSTRAINTS END---------------------->
+        
+         <!---------Simulator Tab ---------------------------->
+         <div id="tab-4" class="tab-content">
+            <p id="detect-date" style="display:none;"></p>
+            
+            <div id="loader" class="loader" style="display:none;">
+                <img src="{{ url_for('static', filename='img/loader2.gif') }}" alt="Loading...">
+            </div>
+            <p id="current-date" style="display:none;" value="2023-01-15T00:00:00.000Z"></p>
+            <div class="demo-dashboard">
+                <center>
+                    <h2 id="dashboard-header">Select a conflict scenario below to simulate the actions</h2>
+                    <!-- Dropdown for Number of Users -->
+                    <label for="num-users">Number of Users:</label>
+                    <select id="num-users">
+                        <option value="4" selected>4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                    </select>
+                    
+                    <!-- Dropdown for Number of Actions -->
+                    <label for="num-actions">Number of Actions:</label>
+                    <select id="num-actions">
+                        <option value="10" selected>10</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>
+                        <option value="13">13</option>
+                        <option value="14">14</option>
+                        <option value="15">15</option>
+                    </select>
+                </center>
+               
+                <div  id="demo-tasks" class="dashboard">
+                    <div class="card" title="Alice and Bob were working together on a private file. Bob modified the file permissions, and suddenly Alice's private information in the file was no longer secret.">
+                        <div class="icon"><i class="fas fa-user-lock"></i></div>
+                        <div class="conflict-type">Unauthorized Permission Modfication</div>
+                        <div class="conflict-action">Add Permission</div>
+                    </div>
+                    <div class="card" title="Alice, Bob, and Carol all had access to a shared file. Carol removed Alice from the file, so Alice couldn't get to it when she needed it." hidden>
+                        <div class="icon"><i class="fas fa-user-slash"></i></div>
+                        <div class="conflict-type">Unauthorized Permission Removal</div>
+                        <div class="conflict-action">Remove Permission</div>
+                    </div>
+                    <div class="card" title="Bob was able to edit a shared file, but Alice changed his permissions to just viewing. Now, Bob can't make any changes to the file." hidden>
+                        <div class="icon"><i class="fas fa-user-edit"></i></div>
+                        <div class="conflict-type">Unauthorized Permission Update</div>
+                        <div class="conflict-action">Modify Permission</div>
+                    </div>
+                    <div class="card" title="Alice and Bob were working on a file, but Bob changed some stuff that made the file wrong and unreliable.">
+                        <div class="icon"><i class="fas fa-edit"></i></div>
+                        <div class="conflict-type">Unauthorized Edit</div>
+                        <div class="conflict-action">Edit</div>
+                    </div>
+                    <div class="card" title="Bob was supposed to make changes to a file by a certain date, but he made edits after that date, which wasn’t allowed." hidden>
+                        <div class="icon"><i class="fas fa-clock"></i></div>
+                        <div class="conflict-type">Time Limit Edit</div>
+                        <div class="conflict-action">Edit</div>
+                    </div>
+                    <div class="card" title="Bob and Alice were working on a file, but Bob moved it somewhere else and now Alice can’t get to it anymore.">
+                        <div class="icon"><i class="fas fa-arrows-alt"></i></div>
+                        <div class="conflict-type">Unauthorized Move</div>
+                        <div class="conflict-action">Move</div>
+                    </div>
+                    <div class="card" title="Bob and Alice were both working on a shared file, but Bob deleted it, so now Alice can't work on it anymore.">
+                        <div class="icon"><i class="fas fa-trash-alt"></i></div>
+                        <div class="conflict-type">Unauthorized Deletion</div>
+                        <div class="conflict-action">Delete</div>
+                    </div>
+                    <div class="card" title="Bob and Alice were working in a shared folder, but Bob made too many unnecessary files, leaving no space for Alice to save her important stuff." hidden>
+                        <div class="icon"><i class="fas fa-folder-plus"></i></div>
+                        <div class="conflict-type">Unauthorized Creation</div>
+                        <div class="conflict-action">Create</div>
+                    </div>
+                </div>
+
+                <!--  Division to display Simulated Actions-------------------------------->
+                <div id="simulator">
+                    
+                </div>
+            </div>
+         
+
+        </div>
+
+
+   
+
+
+        <!---------Simulator Tab End------------------------------------------------------------------->
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+        <!---------  DEMO TAB DETAILS START --
+         <!- <div id="tab-3" class="tab-content">
+            <p id="detect-date" style="display:none;"></p>
+            
+            <div id="loader" class="loader" style="display:none;">
+                <img src="{{ url_for('static', filename='img/loader2.gif') }}" alt="Loading...">
+            </div>
+            <p id="current-date" style="display:none;" value="2023-01-15T00:00:00.000Z"></p>
+            <div class="demo-dashboard">
+                <center>
+                    <h2 id="dashboard-header">Select a conflict scenario below to simulate the actions</h2>
+                    <!- Dropdown for Number of Users --
+                    <label for="num-users">Number of Users:</label>
+                    <select id="num-users">
+                        <option value="4" selected>4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                    </select>
+                    
+                    <!- Dropdown for Number of Actions --
+                    <label for="num-actions">Number of Actions:</label>
+                    <select id="num-actions">
+                        <option value="10" selected>10</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>
+                        <option value="13">13</option>
+                        <option value="14">14</option>
+                        <option value="15">15</option>
+                    </select>
+                </center>
+               
+                <div  id="demo-tasks" class="dashboard">
+                    <div class="card" title="Alice and Bob were working together on a private file. Bob modified the file permissions, and suddenly Alice's private information in the file was no longer secret.">
+                        <div class="icon"><i class="fas fa-user-lock"></i></div>
+                        <div class="conflict-type">Unauthorized Permission Modfication</div>
+                        <div class="conflict-action">(Permission Change)</div>
+                    </div>
+                    <div class="card" title="Alice, Bob, and Carol all had access to a shared file. Carol removed Alice from the file, so Alice couldn't get to it when she needed it." hidden>
+                        <div class="icon"><i class="fas fa-user-slash"></i></div>
+                        <div class="conflict-type">Unauthorized Permission Removal</div>
+                        <div class="conflict-action">(Permission Change)</div>
+                    </div>
+                    <div class="card" title="Bob was able to edit a shared file, but Alice changed his permissions to just viewing. Now, Bob can't make any changes to the file." hidden>
+                        <div class="icon"><i class="fas fa-user-edit"></i></div>
+                        <div class="conflict-type">Unauthorized Permission Update</div>
+                        <div class="conflict-action">(Permission Change)</div>
+                    </div>
+                    <div class="card" title="Alice and Bob were working on a file, but Bob changed some stuff that made the file wrong and unreliable.">
+                        <div class="icon"><i class="fas fa-edit"></i></div>
+                        <div class="conflict-type">Unauthorized Edit</div>
+                        <div class="conflict-action">(Edit)</div>
+                    </div>
+                    <div class="card" title="Bob was supposed to make changes to a file by a certain date, but he made edits after that date, which wasn’t allowed." hidden>
+                        <div class="icon"><i class="fas fa-clock"></i></div>
+                        <div class="conflict-type">Time Limit Edit</div>
+                        <div class="conflict-action">(Edit)</div>
+                    </div>
+                    <div class="card" title="Bob and Alice were working on a file, but Bob moved it somewhere else and now Alice can’t get to it anymore.">
+                        <div class="icon"><i class="fas fa-arrows-alt"></i></div>
+                        <div class="conflict-type">Unauthorized Move</div>
+                        <div class="conflict-action">(Move)</div>
+                    </div>
+                    <div class="card" title="Bob and Alice were both working on a shared file, but Bob deleted it, so now Alice can't work on it anymore.">
+                        <div class="icon"><i class="fas fa-trash-alt"></i></div>
+                        <div class="conflict-type">Unauthorized Deletion</div>
+                        <div class="conflict-action">(Delete)</div>
+                    </div>
+                    <div class="card" title="Bob and Alice were working in a shared folder, but Bob made too many unnecessary files, leaving no space for Alice to save her important stuff." hidden>
+                        <div class="icon"><i class="fas fa-folder-plus"></i></div>
+                        <div class="conflict-type">Unauthorized Creation</div>
+                        <div class="conflict-action">(Create)</div>
+                    </div>
+                </div>
+
+
+                <!- New div element to show the simulation actions --
+                <div id="conflict-actions-display">
+                    
+                     <!-New Division for Selected Conflict Info --
+                    <div id="selected-conflict-info" style="display: none;">
+                        <p><strong>Conflict:</strong> <span id="conflict-text" style="font-size: 18px;"></span></p>
+                        <p><strong>Type:</strong> <span id="conflict-type" style="font-size: 18px;"></span></p>
+                        <!- <p><strong>Scenario:</strong> <span id="conflict-scenario"></span></p> --
+                        <p><strong>Constraint:</strong> <span id="conflict-constraint" style="font-size: 18px;"></span></p>
+                    </div>
+
+                    <div id="status-message-wrapper" style="display: flex; align-items: center;">
+                        <p id="status-message" style="margin-right: 10px;"></p>
+                        <img id="loading-image" src="{{ url_for('static', filename='img/loader2.gif') }}" alt="Loading..." style="display: none; width: 50px; height: 50px;">
+                    </div>
+                    
+                    <table class="data-table" id="log-table" style="display: none;">
+                        <thead>
+                            <tr class="header-row">
+                                <th>S.No</th>
+                                <th>Time</th>
+                                <th>Activity</th>
+                                <th>Resource</th>
+                                <th>Actor</th>
+                                
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!- New Button Element -
+                <div class="button-wrapper">
+                    <button id="action-constraints-button" disabled>Set Action Constraints</button>
+                                    
+                </div>
+                                
+                <!- New Button Element -
+                <div class="button-wrapper">
+                    <button id="detect-conflicts-button" disabled>Detect Conflicts</button>
+                    
+                </div>
+                <div id="detect_loader" class="loader" style="display:none;">
+                    <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="Loading...">
+                </div>
+
+
+
+                <!-  Conflict Detection Table 
+
+                <div id="myModal" class="modal">
+                    <div id="execute_loader" class="loader" style="display:none;">
+                        <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="Loading...">
+                    </div>
+                    <div class="modal-content">
+                        <span class="close">&times;</span>
+                        <p id="detection-label" style="display: none;"></p>
+                        <div id="logs-table-container">
+                            <table id="logs-table" class="conflicts-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Activity Time</th>
+                                        <th>Action</th>
+                                        <th>Resource</th>
+                                        <th>Actor</th>
+                                        <th>Conflict</th>
+                                        <th>Resolution</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+            
+            
+          
+      </div>           -->
+            
+  
+
+
+        <!----------------DEMO TAB END -->
+
+        
+         <!---- Action Constraints ---------------------->
+         <div id="admin-tab-1" class="tab-content">
+            <div class="demo-dashboard">
+                <center>
+                    <h2>Action Constraints</h2>
+                    <p>Following table shows the action constraints:</p>
+                    <button id="showConstraints">Show Action Constraints</button>
+                    <div id="currentTime" style="display: none;"></div>
+                    <p id="statusMessage"></p>
+                </center>
+                <table id="constraintsTable">
+                    <thead>
+                        <tr>
+                            <th>S.no</th>
+                            <th>TimeStamp</th>
+                            <th>Constraint Target</th>
+                            <th>Constraint</th>
+                            <th>Constraint Owner</th>
+                            <th>File</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be added here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!---- Action Constriants END---------------------->
+        
+
+        <!---- Detection Engine ---------------------->
+        <div id="admin-tab-2" class="tab-content">
+            <div class="demo-dashboard">
+                <center>
+                    <h2>Conflict Detection and Resolution</h2>
+                    <p id="detect-date" style="display:none;"></p>
+                
+                    <div id="loader" class="loader" style="display:none;">
+                        <img src="{{ url_for('static', filename='img/loader2.gif') }}" alt="Loading...">
+                    </div>
+                    <p id="current-date" style="display:none;" value="2023-01-15T00:00:00.000Z"></p>
+                    <div class="button-container">
+                        <button id="startEngine">Start Detection Engine</button>
+                        <button id="stopEngine" disabled>Stop Detection Engine</button>
+                    </div>
+                    <div class="status-message-wrapper" style="display: flex; align-items: center;">
+                        <p id="status-message-detectionEngine" style="margin-right: 10px;"></p>
+                        <img id="loading-image" src="{{ url_for('static', filename='img/loader2.gif') }}" alt="Loading..." style="display: none; width: 50px; height: 50px;">
+                    </div>
+
+                </center>
+                
+                   <table class="data-table" id="log-table" style="display: none;">
+                       <thead>
+                           <tr class="header-row">
+                               <th>S.No</th>
+                               <th>Time</th>
+                               <th>Activity</th>
+                               <th>Resource</th>
+                               <th>Actor</th>
+                               
+                           </tr>
+                       </thead>
+                       <tbody>
+                       </tbody>
+                   </table>
+               
+                               
+               <!-- New Button Element -->
+               <div class="button-wrapper">
+                    <center>
+                   <button id="detect-conflicts-button" disabled>Detect Conflicts</button> 
+                   </center>
+               </div>
+               <div id="detect_loader" class="loader" style="display:none;">
+                   <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="Loading...">
+               </div>
+
+
+               <!--- Conflict Detection Table -->
+
+                <div id="myModal" class="modal">
+                    <div id="execute_loader" class="loader" style="display:none;">
+                        <img src="{{ url_for('static', filename='img/loader.gif') }}" alt="Loading...">
+                    </div>
+                    <div class="modal-content">
+                        <span class="close">&times;</span>
+                        <p id="detection-label" style="display: none;"></p>
+                        <div id="logs-table-container">
+                            <table id="logs-table" class="conflicts-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Activity Time</th>
+                                        <th>Action</th>
+                                        <th>Resource</th>
+                                        <th>Actor</th>
+                                        <th>Conflict</th>
+                                        <th>Resolution</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+            </div>
+        </div>
+        <!---- Detection Engine END---------------------->
+        {% if user_role == 'admin' %}
+        <!---- REGISTER or ADD USER---------------------->
+        <div id="admin-tab-3" class="tab-content">
+            <center><h2>Register New User</h2></center>
+            <form id="register-form" onsubmit="return submitForm()">
+                <div id="server-response"></div> <!-- Add a div to display server response -->
+                <br>
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+        
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+        
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+        
+                <label for="role">Role:</label>
+                <select id="role" name="role" required>
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                </select>
+        
+                <button type="submit">Register</button>
+            </form>
+        </div>
+        
+        <script>
+            function validateForm() {
+                const emailInput = document.getElementById('email').value;
+                const usernameInput = document.getElementById('username').value;
+                
+                // Validate email format
+                const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+                if (!emailPattern.test(emailInput)) {
+                    alert("Please enter a valid email address");
+                    return false;
+                }
+                
+                // Sanitize the username input
+                const sanitizedUsername = usernameInput.replace(/[\W_]+/g,"");
+                if (sanitizedUsername !== usernameInput) {
+                    alert("Username contains invalid characters");
+                    return false;
+                }
+                
+                return true;
+            }
+        
+            function submitForm() {
+                if (validateForm()) {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open("POST", "/register_user", true);
+                    xhr.setRequestHeader("Content-Type", "application/json");
+
+                    const formData = {
+                        username: document.getElementById('username').value,
+                        password: document.getElementById('password').value,
+                        email: document.getElementById('email').value,
+                        role: document.getElementById('role').value
+                    };
+
+                    xhr.send(JSON.stringify(formData));
+
+                    xhr.onreadystatechange = function() {
+                        if (xhr.readyState === 4 && xhr.status === 200) {
+                            // Clear form fields
+                            document.getElementById('username').value = '';
+                            document.getElementById('password').value = '';
+                            document.getElementById('email').value = '';
+                            document.getElementById('role').value = 'user';
+
+                            // Display server response at the beginning of the form
+                            const serverResponse = JSON.parse(xhr.responseText);
+                            const responseDiv = document.getElementById('server-response');
+                            responseDiv.innerHTML = serverResponse.message;
+                            responseDiv.style.color = 'green';
+                        }
+                    };
+
+                    return false; // Prevent the form from submitting in the traditional way
+                }
+
+                return false; // Prevent form submission if validation fails
+            }
+        </script>
+        
+
+        <!---- REGISTER USER END---------------------->
+
+        {% endif %}
+    </main>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/detection.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/actionconstraint.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/simulator.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/demoConstraints.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/demoDetection.js') }}"></script>
+    <!-- <script src="{{ url_for('static', filename='js/demodashboard.js') }}"></script> -->
+    <!-- <script src="{{ url_for('static', filename='js/modal.js') }}"></script> -->
+</body>
+</html>

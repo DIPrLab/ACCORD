@@ -1,0 +1,161 @@
+.filter-options {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+    background-color: #f5f5f5;
+    padding: 20px;
+    border-radius: 5px;
+  }
+  
+  .filter-group {
+    display: flex;
+    align-items: center;
+    margin: 10px; /* add margin-bottom to create some space between filter groups */
+  }
+  
+  .filter-group label {
+    margin-right: 10px;
+    font-weight: bold;
+    margin-right: 5px; /* add margin-bottom to create some space between the label and select elements */
+  }
+  
+  .filter-group select {
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    background-color: #fff;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease;
+  }
+  
+  .filter-group select:focus {
+    outline: none;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+  }
+  
+  .filter-buttons {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .filter-buttons button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    background-color: #0077cc;
+    color: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-left: 10px;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  }
+  
+  .filter-buttons button:first-of-type {
+    margin-left: 0;
+  }
+  
+  .filter-buttons button:hover {
+    background-color: #0063ae;
+  }
+
+  .view-button {
+    background-color: #E34234;
+    color: white;
+    border-style: outset;
+    border-width: 2px;
+    border-radius: 10px;
+    border-color: #C21E56;
+    padding: 6px;
+  }
+  .view-button:hover {
+    background-color: #C41E3A;
+    cursor: pointer;
+  }
+  .view-button:active {
+    background-color: #FF3131;
+    border-style: inset;
+    cursor: pointer;
+  }
+
+  .resolve-button {
+    background-color: #4CAF50;
+    color: white;
+    border-style: outset;
+    border-width: 2px;
+    border-radius: 10px;
+    border-color: #008000;
+    padding: 6px;
+  }
+  .resolve-button:hover {
+    background-color: #3e8e41;
+    cursor: pointer;
+  }
+  .resolve-button:active {
+    background-color: #228B22;
+    border-style: inset;
+    cursor: pointer;
+  }
+  
+/* Style the table */
+.conflicts-table {
+  border-collapse: collapse;
+  margin: 0 auto; /* Align the table to the center of the page */
+  width: 90%; /* Adjust the width of the table */
+}
+
+/* Style the table header */
+.conflicts-table  thead {
+  background-color: #f2f2f2 !important;
+}
+
+/* Style the table header text */
+.conflicts-table  th {
+  font-weight: bold;
+  padding: 12px;
+  text-align: left;
+  vertical-align: middle;
+  border: 1px solid #ddd !important;
+}
+
+/* Style the table rows */
+.conflicts-table  tr {
+  border-bottom: 1px solid #ddd !important;
+}
+
+/* Style the table data cells */
+.conflicts-table  td {
+  padding: 8px;
+  text-align: left;
+  vertical-align: middle;
+  border: 1px solid #ddd !important;
+}
+
+/* Add hover effect on table rows */
+.conflicts-table  tbody tr:hover {
+  background-color: #f5f5f5 !important;
+}
+
+/* Center buttons in the last two columns */
+.conflicts-table td:last-child,
+.conflicts-table td:nth-last-child(2) {
+  text-align: center;
+}
+
+/* Style the detection label */
+#detection-label {
+  font-size: 16px;
+  font-weight: bold;
+  color: #444;
+  text-align: center;
+  margin: 20px 0;
+  padding: 10px;
+  border: 1px solid #ccc;
+  background-color: #f2f2f2;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+}
