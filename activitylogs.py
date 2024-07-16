@@ -5,12 +5,29 @@ from datetime import datetime, timedelta
 # Method to update Activity Logs in the database
 
 class Logupdater():
+    '''Fetch logs and update database.
+
+    Retrieve all new logs since date last fetched ("last log date") from
+    Admin SDK Reports API service. Parse logs and insert into logs table
+    in database.
+
+    Attributes:
+        mysql: flask_mysqldb.MySQL
+        reportsAPI_service: googleapiclient.discovery.Resource, for
+            interacting with Admin SDK Reports API
+    '''
+
     def __init__(self, mysql, reportsAPI_service):
         self.mysql = mysql
         self.reportsAPI_service = reportsAPI_service
 
 
     def updateLogs_database(self):
+        '''Fetch recent logs, parse, and insert into activity_logs table.
+
+        Returns:
+            Number of added activity logs.
+        '''
         try:
             # Create DB connection
             db = DatabaseQuery(self.mysql.connection, self.mysql.connection.cursor())
