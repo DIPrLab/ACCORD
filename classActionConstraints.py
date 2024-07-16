@@ -1,13 +1,20 @@
-
 # The class extracts all the action constaints related to the activity object
 class ActionConstraints:
+    '''Parse action constraints and store those matching an Activity's document id
+
+    Attributes:
+        activityObj: Activity
+        actionConstraints: Dict[str, list]
+    '''
+
     def __init__(self,ActivityObject, actionConstraints):
+        '''Extract relevant constraints and initialize ActionConstraints'''
         self.activityObj = ActivityObject
         self.actionConstraints = {}
         self.generateConstraints(self.activityObj.documentID, actionConstraints)
         
 
-    # The getConstaints creates an obbject to handle action constraints of a particular document ID
+    # The getConstaints creates an object to handle action constraints of a particular document ID
     # constraintsObj = {
     #                       action1: 
     #                           {
@@ -27,6 +34,30 @@ class ActionConstraints:
 
     # Fetch the action constraints from the database
     def generateConstraints(self, documentID, actionConstraints):
+        '''Filter action constraints by doc id and initialize self.actionConstraints
+
+        self.actionConstraints will have the form:
+        {
+            action1:
+                {
+                    actionType1:
+                        {
+                            target:[val,comp,true_val]
+                        },
+                    actionType2:
+                        {
+                            ...
+                        },
+                },
+            action2:
+                ...
+        }
+
+        Args:
+            documentID: str, document id to filter constraints by
+            actionConstraints: Dict[documentID: str, constraints: list],
+                all action constraints to filter
+        '''
         try:
             if documentID in actionConstraints:
                 constraintsList = actionConstraints[documentID]
