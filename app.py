@@ -29,7 +29,47 @@ app.config['MYSQL_DB'] = db_config['mysql_db']
 
 mysql = MySQL(app)
 
+########### Function to simplify Date Time ##########################
+def simplify_datetime(datetime_str):
+    dt = datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
+    formatted_date = dt.strftime("%d %B %Y, %H:%M:%S")
+    return formatted_date
 
+##### Function process fetched logs
+def process_logs(logV):
+    '''Generate a human-readable string from an activity log'''
+    action = logV[1][:3]  # Get the first three characters for comparison
+    actor = logV[5].split('@')[0].capitalize()
+
+    if action == "Cre":
+        return f'{actor} has Created a resource'
+    elif action == "Del":
+        return f'{actor} has Deleted a resource'
+    elif action == "Edi":
+        return f'{actor} has Edited a resource'
+    elif action == "Ren":
+        return f'{actor} has Renamed a resource'
+    elif action == "Mov":
+        _, src, dest = logV[1].split(':')
+        return f'{actor} has Moved a resource from {src} to {dest}'
+    elif action == "Per":
+        sub_parts = logV[1].split(':')
+        first_sub_part = sub_parts[1].split('-')[0] if len(sub_parts) > 1 else ""
+        second_sub_part = sub_parts[2].split('-')[0] if len(sub_parts) > 2 else ""
+        user = sub_parts[3].split('@')[0].capitalize() if len(sub_parts) > 3 else ""
+        permissions = { 'can_edit': '"Editor"',
+                        'can_comment,can_view': '"Commenter"',
+                        'can_view,can_comment': '"Commenter"',
+                        'can_view': '"Viewer"',
+                        'owner': '"Owner"' }
+        if second_sub_part == "none":
+            return f'{actor} has given {user} {permissions.get(first_sub_part)} permissions'
+        elif first_sub_part == "none":
+            return f'{actor} has removed {permissions.get(second_sub_part)} permissions for {user}'
+        else:
+            return f'{actor} has updated permissions for {user} from {permissions.get(second_sub_part)} to {permissions.get(first_sub_part)}'
+    else:
+        return " ".join(logV)
 
 ## Route to ensure there is no going back and cache is cleared ###########################
 @app.after_request
@@ -38,7 +78,6 @@ def add_no_cache(response):
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "-1"
     return response
-
 
 @app.before_request
 def before_request():
@@ -49,49 +88,10 @@ def before_request():
             else:
                 return redirect(url_for('user_dashboard'))
 
-########### Route to register a new user ##################
-@app.route('/register_user', methods=['POST'])
-def register_user():
-    data = request.get_json()
-    
-    username = data.get('username')
-    password = data.get('password')
-    email = data.get('email')
-    role = data.get('role')
-
-    password = hashlib.md5(password.encode())
-    
-    # Server-side email format validation
-    email_pattern = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-    if not email_pattern.match(email):
-        return jsonify({"message": "Invalid email format"})
-
-    # If the email is valid, proceed with saving the user to your database, etc.
-    cursor = mysql.connection.cursor()
-
-    # Check if email already exists in the database
-    email_check_query = "SELECT email FROM app_users WHERE email=%s"
-    cursor.execute(email_check_query, (email,))
-    existing_email = cursor.fetchone()
-
-    if existing_email:
-        # Email already exists, return an error
-        return jsonify({"message": "Email already in use"})
-
-
-    # Insert a new user into the app_users table
-    query = "INSERT INTO app_users (name, email, password, role) VALUES (%s, %s, %s, %s)"
-    cursor.execute(query, (username, email, password.hexdigest(), role))
-
-    # Commit changes
-    mysql.connection.commit()
-
-    return jsonify({"message": "User registered successfully"})
-
-
 ########### Route to Log In the user######################
 @app.route('/', methods=['GET', 'POST'])
 def login():
+    '''Index: login page'''
     session.clear()
     error = None
     if request.method == 'POST':
@@ -121,7 +121,6 @@ def login():
             activity_logs.updateLogs_database() 
             del activity_logs
 
-
             if session['user_role'] == 'admin':
                 return redirect(url_for('admin_dashboard'))
             else:
@@ -131,10 +130,49 @@ def login():
 
     return render_template('index.html', error=error)
 
+########### Route to register a new user ##################
+@app.route('/register_user', methods=['POST'])
+def register_user():
+    '''Register a new user and insert into database'''
+    data = request.get_json()
+
+    username = data.get('username')
+    password = data.get('password')
+    email = data.get('email')
+    role = data.get('role')
+
+    password = hashlib.md5(password.encode())
+
+    # Server-side email format validation
+    email_pattern = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+    if not email_pattern.match(email):
+        return jsonify({"message": "Invalid email format"})
+
+    # If the email is valid, proceed with saving the user to your database, etc.
+    cursor = mysql.connection.cursor()
+
+    # Check if email already exists in the database
+    email_check_query = "SELECT email FROM app_users WHERE email=%s"
+    cursor.execute(email_check_query, (email,))
+    existing_email = cursor.fetchone()
+
+    if existing_email:
+        # Email already exists, return an error
+        return jsonify({"message": "Email already in use"})
+
+    # Insert a new user into the app_users table
+    query = "INSERT INTO app_users (name, email, password, role) VALUES (%s, %s, %s, %s)"
+    cursor.execute(query, (username, email, password.hexdigest(), role))
+
+    # Commit changes
+    mysql.connection.commit()
+
+    return jsonify({"message": "User registered successfully"})
 
 ##### Routes for user and Admin Dashboards ##############
 @app.route('/admin_dashboard')
 def admin_dashboard():
+    '''Administrator (privileged) dashboard'''
     if 'user_id' in session and session['user_role'] == 'admin':
 
         drive_service = user_services[session['username']]['drive']
@@ -149,6 +187,7 @@ def admin_dashboard():
 
 @app.route('/user_dashboard')
 def user_dashboard():
+    '''User dashboard'''
     if 'user_id' in session and session['user_role'] != 'admin':
 
         drive_service = user_services[session['username']]['drive']
@@ -160,11 +199,10 @@ def user_dashboard():
     else:
         return redirect(url_for('login'))
 
-
-
 ####### Route for Log Out #############
 @app.route('/logout')
 def logout():
+    '''Delete user session to log out user'''
     # Remove services from the global services dictionary upon logout
     if 'username' in session:
         user_services.pop(session['username'], None)
@@ -176,18 +214,13 @@ def logout():
 ############# Route to handle Refresh Logs event ################
 @app.route('/refresh_logs', methods=['POST'])
 def refresh_logs():
+    '''Fetch activity logs & update database. Returns number of logs in response'''
     # Fetch and Update the logs database
     activity_logs = Logupdater(mysql, user_services[session['username']]['reports'])
     total_logs = activity_logs.updateLogs_database() 
     del activity_logs
-    
-    return jsonify(len=str(total_logs))
 
-########### Function to simplify Date Time ##########################
-def simplify_datetime(datetime_str):
-    dt = datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
-    formatted_date = dt.strftime("%d %B %Y, %H:%M:%S")
-    return formatted_date
+    return jsonify(len=str(total_logs))
 
 # ########### Route to handle OnClick Detect Function ##############
 # @app.route('/detect_conflicts', methods=['POST'])
@@ -288,7 +321,7 @@ def simplify_datetime(datetime_str):
 ########### Route to handle OnClick Detect Function for Demonstration ##############
 @app.route('/detect_conflicts_demo', methods=['POST'])
 def detect_conflicts_demo():
-    
+    '''Detect function for demo: Detect conflicts in logs since 'current_date''''
     currentDateTime = request.form.get('current_date')
 
     # Extract Logs from databse with the filter parameters and also extract all the action constraints
@@ -304,7 +337,7 @@ def detect_conflicts_demo():
             actionConstraints[constraint[1]] = [constraint]
         else:
             actionConstraints[constraint[1]].append(constraint)
-    
+
     conflictID = []
     if(logs != None and len(logs)>1):
         
@@ -333,7 +366,6 @@ def detect_conflicts_demo():
                 briefLogs.append(event)
                 conflictsCount += 1
                 conflictID.append(str(totalLogs - i))
-                
 
                 # Add conflicts to the conflicts table to track resolved conflicts
                 db.add_conflict_resolution(event[0], event[1])
@@ -344,10 +376,8 @@ def detect_conflicts_demo():
             speed = "Inf"
         else:
             speed = floor(conflictsCount/(T1-T0))
-        
+
         detectTimeLabel = "Time taken to detect "+str(conflictsCount)+" conflicts from "+str(totalLogs)+" activity logs: "+str(round(T1-T0,3))+" seconds. Speed = "+str(speed)+" conflicts/sec"
-        
-        
 
         return jsonify(logs=conflictLogs, detectTimeLabel=detectTimeLabel, briefLogs=briefLogs, conflictID = conflictID)
     
@@ -355,17 +385,23 @@ def detect_conflicts_demo():
         detectTimeLabel = "No Activites Found for the selected filters"
         return jsonify(logs=[], detectTimeLabel=detectTimeLabel, briefLogs=[], conflictID = conflictID)
 
-
-
-
 ### Route to Simulate actions for Simulator without actually performing actions
 @app.route('/simulate_actions', methods=['POST'])
 def simulate_actions():
+    '''Randomly generate user actions for Simulator without performing them
+
+    Request JSON:
+        conflictAction: str, ensure this action is an option
+        num_users: int, number of users in simulation, including admin
+        num_actions: actions to generate
+
+    Response: list of JSON objects for each action with keys:
+        "performingUser", "action", "targetUser", "fileName", and "fileID"
+    '''
     data = request.json
     conflict_action = data['conflictAction']
     num_users = int(data['numUsers'])
     num_actions = int(data['numActions'])
-    
 
     # Fetch the List of users
     directory = "tokens/"
@@ -397,7 +433,7 @@ def simulate_actions():
     file_name = random.choice(list(files.keys()))
     file_id = files[file_name]
 
-
+    # Randomly construct actions
     while performed_actions < num_actions:
         performing_user = random.choice(file_users)
         possible_actions = actions.copy()
@@ -420,7 +456,6 @@ def simulate_actions():
                     "targetUser": target_user,
                     "fileName": file_name,
                     "fileID": file_id})
-                
                 performed_actions += 1
         elif selected_action == 'Add Permission':
             non_file_users = list(set(selected_users) - set(file_users))
@@ -433,7 +468,6 @@ def simulate_actions():
                     "targetUser": new_user,
                     "fileName": file_name,
                     "fileID": file_id})
-                
                 performed_actions += 1
         elif selected_action == 'Update Permission':
             if len(file_users) > 1 and target_user != performing_user and target_user != 'admin@accord.foundation':
@@ -443,7 +477,6 @@ def simulate_actions():
                     "targetUser": target_user,
                     "fileName": file_name,
                     "fileID": file_id})
-                
                 performed_actions += 1
         elif selected_action in ['Edit', 'Move']:
             action_log.append({
@@ -452,7 +485,6 @@ def simulate_actions():
                     "targetUser": "-",
                     "fileName": file_name,
                     "fileID": file_id})
-            
             performed_actions += 1
         elif selected_action == 'Delete' and conflict_action == 'Delete' and performed_actions == num_actions - 1:
             action_log.append({
@@ -465,12 +497,10 @@ def simulate_actions():
 
     return jsonify({'success': True, 'actions': action_log})
 
-
-
-
 ### Route to add cosntraints to the database as selected by the user
 @app.route('/addActionConstraints', methods=['POST'])
 def add_action_constraints():
+    '''Add action constraint to database with Admin as owner'''
     data = request.json
     actions = data['actions']
     try:
@@ -504,29 +534,27 @@ def add_action_constraints():
             db = DatabaseQuery(mysql.connection, mysql.connection.cursor())
             db.add_action_constraint(constraints)  
             del db
-            
+
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
-    
-
 
 ########## Route to fetch action constrains and display ########################
 @app.route('/fetch_actionConstraints', methods=['POST'])
 def fetch_action_constraints():
+    '''Fetch actions constraints created today and return JSON object for each'''
     db = DatabaseQuery(mysql.connection, mysql.connection.cursor())
     constraints = db.fetch_action_constraints()
-    
 
     ## Process the constraints and create a dictionary
     processed_constraints = []  # List to hold all processed constraints dictionaries
-    
+
     # Iterate over each constraint skipping the header
     for constraint in constraints[1:]:
-        
+
         # Unpack each constraint row into variables
         doc_name, doc_id, action, action_type, constraint_target, action_value, comparator, constraint_owner, allowed_value, time_stamp = constraint
-        
+
         # Initialize the dictionary to store the processed constraint
         constraint_dict = {
             "TimeStamp": time_stamp,
@@ -534,7 +562,7 @@ def fetch_action_constraints():
             "ConstraintTarget": constraint_target,
             "File": doc_name
         }
-        
+
         # Determine the Constraint value based on Action Value and Action Type
         if action_value == "FALSE":
             if action_type == "Add Permission":
@@ -553,21 +581,27 @@ def fetch_action_constraints():
                 constraint_value = "Undefined Action"  # Default message if no specific action type matched
         else:
             constraint_value = "No restriction"  # Default message if action value is not "FALSE"
-        
+
         # Set the 'Constraint' key in the dictionary
         constraint_dict['Constraint'] = constraint_value
-        
+
         # Append the constructed dictionary to the list
         processed_constraints.append(constraint_dict)
-    
-    return jsonify(processed_constraints)
 
+    return jsonify(processed_constraints)
 
 ## Route to Simulate actions for user study
 @app.route('/fetch_task_content', methods=['POST'])
 def fetch_task_content():
+    '''Simulator: Perform appropriate action on Drive resources
     
-
+    Request:
+        action: str
+        addConstraint: unknown, not used
+        constraintType: str
+        fileID: str
+        actionIndex: int, actions already performed (this is nth action)
+    '''
     # Fetch the content for the task based on the task_id
     # Initilize Actions, Actions to be simulated and Delays 
     #actionsList = ["Create", "Delete", "Edit", "Move", "Permission Change"]
@@ -583,8 +617,6 @@ def fetch_task_content():
     print(actionIndex)
     if(fileID == 'None'):
         fileID = None
-    
-    
 
     #### CallSimulator Object #########
     # Extract User tokes 
@@ -598,11 +630,10 @@ def fetch_task_content():
 
     ### Perform first few actions as owner and remainer other actions as other ditors
     owner = UserSubject(session['user_id'], file_dict)
-    
+
     if(actionIndex < 2):
         actor = owner
     else:
-  
         if(fileID != 'None'):
             # get all the editors of the file
             file = owner.service.files().get(fileId=fileID, fields="permissions").execute()
@@ -620,7 +651,7 @@ def fetch_task_content():
             actor = UserSubject(actorEmail, file_dict)
         else:
             actor = owner
-    constraint = ""
+
     # Add Constraint and Perform the constraint action 
     if(actionIndex == 3):
         db = DatabaseQuery(mysql.connection, mysql.connection.cursor())
@@ -638,6 +669,8 @@ def fetch_task_content():
         actor_userName = actor.userName.split('@')[0].capitalize()
 
         ## Creating the constraint message
+        constraint = ""
+
         if action == "Permission Change":
             if constraintType == "Add Permission":
                 constraint = f'<span style="color:black">User:</span> <span style="color:red">{owner_userName}</span> has restricted <span style="color:black">Target:</span> <span style="color:red">{actor_userName}</span> from <span style="color:black">Action Type:</span> <span style="color:red">adding new users</span> to <span style="color:black">Resource:</span> <span style="color:red">{document_name}</span>'
@@ -645,27 +678,24 @@ def fetch_task_content():
                 constraint = f'<span style="color:black">User:</span> <span style="color:red">{owner_userName}</span> has restricted <span style="color:black">Target:</span> <span style="color:red">{actor_userName}</span> from <span style="color:black">Action Type:</span> <span style="color:red">removing users</span> from <span style="color:black">Resource:</span> <span style="color:red">{document_name}</span>'
             else:
                 constraint = f'<span style="color:black">User:</span> <span style="color:red">{owner_userName}</span> has restricted <span style="color:black">Target:</span> <span style="color:red">{actor_userName}</span> from <span style="color:black">Action Type:</span> <span style="color:red">modifying users permission</span> of <span style="color:black">Resource:</span> <span style="color:red">{document_name}</span>'
-        
+
         elif action == "Edit":
             if constraintType == "Can Edit":
                 constraint = f'{owner_userName} has set a constraint on {document_name} for user {actor_userName} from editing the resource'
             else:
                 constraint = f'{owner_userName} has set a constraint on {document_name} for user {actor_userName} from editing the resource out of timeframe'
-        
+
         elif action == "Move":
             constraint = f'{owner_userName} has set a constraint on {document_name} for user {actor_userName} from moving the resource'
-        
+
         elif action == "Delete":
             constraint = f'{owner_userName} has set a constraint on {document_name} for user {actor_userName} from deleting the resource'
-        
+
         else:
             constraint = f'{owner_userName} has set a constraint on {document_name} for user {actor_userName} from creating additional resources'
-        
-        
+
         time.sleep(3)
 
-        
-    
     Simulator = PerformActions(owner, actor, action, constraintType, fileID, actionIndex, addConstraint)
     fileID = Simulator.perform_actions(file_dict)
 
@@ -674,52 +704,14 @@ def fetch_task_content():
         'fileID': fileID,
         'constraint': constraint
     }
-    
+
     # Return file ID and the constraint
     return jsonify(response_data)
-
-  
-
-
-##### Function ptocess fetched logs
-def process_logs(logV):
-    '''Generate a human-readable string from an activity log'''
-    action = logV[1][:3]  # Get the first three characters for comparison
-    actor = logV[5].split('@')[0].capitalize()
-
-    if action == "Cre":
-        return f'{actor} has Created a resource'
-    elif action == "Del":
-        return f'{actor} has Deleted a resource'
-    elif action == "Edi":
-        return f'{actor} has Edited a resource'
-    elif action == "Ren":
-        return f'{actor} has Renamed a resource'
-    elif action == "Mov":
-        _, src, dest = logV[1].split(':')
-        return f'{actor} has Moved a resource from {src} to {dest}'
-    elif action == "Per":
-        sub_parts = logV[1].split(':')
-        first_sub_part = sub_parts[1].split('-')[0] if len(sub_parts) > 1 else ""
-        second_sub_part = sub_parts[2].split('-')[0] if len(sub_parts) > 2 else ""
-        user = sub_parts[3].split('@')[0].capitalize() if len(sub_parts) > 3 else ""
-        permissions = { 'can_edit': '"Editor"',
-                        'can_comment,can_view': '"Commenter"',
-                        'can_view,can_comment': '"Commenter"',
-                        'can_view': '"Viewer"',
-                        'owner': '"Owner"' }
-        if second_sub_part == "none":
-            return f'{actor} has given {user} {permissions.get(first_sub_part)} permissions'
-        elif first_sub_part == "none":
-            return f'{actor} has removed {permissions.get(second_sub_part)} permissions for {user}'
-        else:
-            return f'{actor} has updated permissions for {user} from {permissions.get(second_sub_part)} to {permissions.get(first_sub_part)}'
-    else:
-        return " ".join(logV)
 
 ############## Route to fetch Drive Log ##########################
 @app.route('/fetch_drive_log', methods=['GET'])
 def fetch_drive_log():
+    '''Fetch activity logs since specified time.'''
     startTime = request.args.get('time') # retrieve time from the GET parameters
     # Create DB connection
     db = DatabaseQuery(mysql.connection, mysql.connection.cursor())
@@ -729,7 +721,6 @@ def fetch_drive_log():
     if(startTime != None):
         # Extract the activity logs from the Google cloud from lastlog Date
         activity_logs = extractDriveLog(startTime, user_services[session['username']]['reports'])
-        
 
         # Update the log Database table when the new activities are recorded
         if(len(activity_logs) > 1):
@@ -738,14 +729,13 @@ def fetch_drive_log():
                 logV = logitem.split('\t*\t')
                 totalLogs.append({'time':simplify_datetime(logV[0]), 'activity':process_logs(logV), 'actor': logV[5].split('@')[0].capitalize(), 'resource':logV[3]})
 
-        
-
     del db
     return jsonify(totalLogs)
 
 ####### Route for fetching Action Constraints ###############
 @app.route('/get_action_constraints', methods=['POST'])
 def get_action_constraints():
+    '''Fetch action constraints by doc id, action, and target'''
     doc_id = request.form.get('doc_id')
     action = request.form.get('action')
     action = action.split(':')[0].split('-')[0]
@@ -760,10 +750,9 @@ def get_action_constraints():
         return jsonify([])
 
 ####### Route for fetching Resolutions from Database ###########
-
 @app.route('/fetch_resolutions', methods=['POST'])
 def fetch_resolutions():
-
+    '''Fetch resuolutions by conflict action, actor, doc id, user, and time'''
     action = request.form.get('action').split(':')[0].split('-')[0]
     actor = request.form.get('actor')
     document_id = request.form.get('document_id')
@@ -773,7 +762,6 @@ def fetch_resolutions():
     # Extract Resolutions from databse with the filter parameters and also extract all the action constraints
     db = DatabaseQuery(mysql.connection, mysql.connection.cursor())
     resolutions = db.get_conflict_resolutions(action)
-
     val = db.extract_conflict_resolution(conflictTime, request.form.get('action'))
     del db
 
@@ -786,6 +774,7 @@ def fetch_resolutions():
 # Define the route to handle the POST request
 @app.route('/execute_resolution', methods=['POST'])
 def execute_resolution():
+    '''Execute resolution and mark conflict as resolved in database'''
     try:
         # Retrieve the data sent in the POST request
         activityTime = request.form.get('activityTime')
@@ -804,16 +793,10 @@ def execute_resolution():
             return jsonify({'status': 'success'}), 200
         else:
             return jsonify({'status': 'failure'}), 500
-        
-
 
     except Exception as e:
         # Log the error and return an error response
         return jsonify({'error': str(e)}), 500
-
-
-
-
 
 if __name__ == '__main__':
     app.run(debug=True)
