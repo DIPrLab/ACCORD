@@ -9,13 +9,9 @@ class DatabaseQuery:
     '''
 
     def __init__(self, mydb, mycursor):
-        try:
-            self.db = mydb
-            self.cursor = mycursor
-        except:
-            return "Error Connecting to database!!"
+        self.db = mydb
+        self.cursor = mycursor
 
-    # Function to update date
     def update_log_date(self, date):
         '''Update date on logs in lastlogdate table'''
         try:
@@ -28,7 +24,6 @@ class DatabaseQuery:
         except TypeError as te:
             return "Error in Type matching !!\n" + str(te)
 
-    # Function to extract last log activity date from the database
     def extract_lastLog_date(self):
         '''Return date of most recent log from database'''
         try:
@@ -45,7 +40,6 @@ class DatabaseQuery:
         except TypeError as te:
             return "Error in Type matching !!\n" + str(te)
 
-    # Function to update logs in the sql table
     def add_activity_logs(self, logs):
         '''Parse logs and insert into activity_log table.
 
@@ -72,7 +66,6 @@ class DatabaseQuery:
         except TypeError as te:
             return "Error in Type matching !!\n" + str(te)
 
-    # Function to extract logs based on filter from database
     def extract_logs_detect(self,action,actor,document):
         '''Return all logs matching provided action, actor, and document
 
@@ -90,9 +83,7 @@ class DatabaseQuery:
             logs = [["Activity Time","Action","Document ID","Document Name","Actor ID","Actor Name"]]
             if (myresult != None):
                 for result in myresult:
-
                     logs.append(list(result))
-
                 return logs
             else:
                 return None
@@ -103,7 +94,6 @@ class DatabaseQuery:
         except TypeError as te:
             return "Error in Type matching !!\n" + str(te)
 
-    # Function to extract logs based on filter from database
     def extract_logs_date(self,dateTime):
         '''Return all logs happening after provided dateTime
 
@@ -115,14 +105,11 @@ class DatabaseQuery:
         try:
             query = "SELECT activity_time, action, doc_id, doc_name, actor_id, actor_name FROM activity_log WHERE activity_time > %s"
             self.cursor.execute(query, (dateTime,))
-
             myresult = self.cursor.fetchall()
             logs = [["Activity Time","Action","Document ID","Document Name","Actor ID","Actor Name"]]
             if (myresult != None):
                 for result in myresult:
-
                     logs.append(list(result))
-
                 return logs
             else:
                 return None
@@ -133,7 +120,6 @@ class DatabaseQuery:
         except TypeError as te:
             return "Error in Type matching !!\n" + str(te)
 
-    # Function to extract logs based on filter from database
     def extract_logs(self,startDate,endDate):
         '''Return all activity logs in date range
 
@@ -150,9 +136,7 @@ class DatabaseQuery:
             logs = [["Activity Time","Action","Document ID","Document Name","Actor ID","Actor Name"]]
             if (myresult != None):
                 for result in myresult:
-
                     logs.append(list(result))
-
                 return logs
             else:
                 return None
@@ -163,7 +147,6 @@ class DatabaseQuery:
         except TypeError as te:
             return "Error in Type matching !!\n" + str(te)
 
-    #Function to extract action constraints of current day
     def fetch_action_constraints(self):
         '''Return action constraints created today.
 
@@ -185,7 +168,6 @@ class DatabaseQuery:
 
             # Define the headers
             constraints = [["Doc_Name", "Doc_ID", "Action", "Action Type", "Constraint Target", "Action Value", "Comparator", "Constraint Owner", "Allowed Values", "Time_Stamp"]]
-            
             if myresult:
                 for result in myresult:
                     constraints.append(list(result))
@@ -199,7 +181,6 @@ class DatabaseQuery:
         except TypeError as te:
             return "Error in Type matching !!\n" + str(te)
 
-    # Function to extract action Constraints from database
     def extract_action_constraints(self, constraint_owner):
         '''Return action constraints satisfying predicate about constraint owner
 
@@ -216,7 +197,6 @@ class DatabaseQuery:
             if (myresult != None):
                 for result in myresult:
                     constraints.append(list(result))
-
                 return constraints
             else:
                 return None
@@ -226,8 +206,7 @@ class DatabaseQuery:
             return "Error in Value Entered !!\n" + str(ve)
         except TypeError as te:
             return "Error in Type matching !!\n" + str(te)
-    
-    # Function to extract action Constraints from database for conflict
+
     def extract_conflict_action_constraints(self,action,actor,docID):
         '''Return action constraints for specified action, actor, and document
 
@@ -247,7 +226,6 @@ class DatabaseQuery:
             if (myresult != None):
                 for result in myresult:
                     constraints.append(list(result))
-
                 return constraints
             else:
                 return None
@@ -258,7 +236,6 @@ class DatabaseQuery:
         except TypeError as te:
             return "Error in Type matching !!\n" + str(te)
 
-    # Function to extract action Constraints from database owned by particular owner
     def get_action_constraints(self,owner):
         '''Return action constraints matching specified owner
 
@@ -276,7 +253,6 @@ class DatabaseQuery:
             if (myresult != None):
                 for result in myresult:
                     constraints.append(list(result))
-
                 return constraints
             else:
                 return None
@@ -287,7 +263,6 @@ class DatabaseQuery:
         except TypeError as te:
             return "Error in Type matching !!\n" + str(te)
 
-    # Function to update action constraints in the sql table
     def add_action_constraint(self, constraints):
         '''Insert an action constraint into action_constrains table
 
@@ -295,7 +270,6 @@ class DatabaseQuery:
             constraints: list, values to insert
         '''
         try:
-            
             doc_name = constraints[0]
             doc_id = constraints[1]
             action = constraints[2]
@@ -316,7 +290,6 @@ class DatabaseQuery:
         except TypeError as te:
             return "Error in Type matching !!\n" + str(te)
 
-    # Function to extract action Constraints for an action on given target
     def extract_targetaction_constraints(self, doc_id, action, action_type, constraint_target):
         '''Return first action constraint matching provided fields
 
@@ -330,12 +303,10 @@ class DatabaseQuery:
         '''
         try:
             query = "SELECT doc_id, action, action_type, constraint_target, constraint_owner FROM action_constraints WHERE doc_id = %s AND action = %s AND constraint_target = %s"
-            
             self.cursor.execute(query,(doc_id, action, constraint_target))
             myresult = self.cursor.fetchall()
 
             if (myresult != None):
-                
                 return myresult[0]
             else:
                 return []
@@ -345,8 +316,7 @@ class DatabaseQuery:
             return "Error in Value Entered !!\n" + str(ve)
         except TypeError as te:
             return "Error in Type matching !!\n" + str(te)
-    
-    # Function to extract conflict resolutions of particular action from database
+
     def get_conflict_resolutions(self,action):
         '''Return conflict resolutions for specified action
 
@@ -372,8 +342,7 @@ class DatabaseQuery:
         except TypeError as te:
             return "Error in Type matching !!\n" + str(te)
 
-    # Function to extract conflict resolutions
-    def extract_conflict_resolution(self,conflictTime, conflictType):
+    def extract_conflict_resolution(self, conflictTime, conflictType):
         '''Returns resolution matching provided time & type
 
         Args:
@@ -396,8 +365,7 @@ class DatabaseQuery:
             return "Error in Value Entered !!\n" + str(ve)
         except TypeError as te:
             return "Error in Type matching !!\n" + str(te)
-    
-    # Function to add conflict resolutions in database
+
     def add_conflict_resolution(self, conflictTime, conflictType):
         '''Insert placeholder resolution "False" if there aren't matching conflicts
 
@@ -406,7 +374,6 @@ class DatabaseQuery:
             conflictType: str
         '''
         try:
-
             # Check if a record with the same conflictTime and conflictType already exists
             check_query = "SELECT COUNT(*) FROM conflicts WHERE conflictTime = %s AND conflictType = %s"
             self.cursor.execute(check_query, (conflictTime, conflictType))
@@ -415,7 +382,6 @@ class DatabaseQuery:
             if(count == 0):         
                 resolution = "False"
                 self.cursor.execute("INSERT INTO conflicts (conflictTime,conflictType,resolution) VALUES (%s,%s,%s)", (conflictTime,conflictType,resolution))
-
                 self.db.commit()
 
         except LookupError as le:
@@ -424,9 +390,7 @@ class DatabaseQuery:
             return "Error in Value Entered !!\n" + str(ve)
         except TypeError as te:
             return "Error in Type matching !!\n" + str(te)
-    
 
-    # Function to update conflict resolutions
     def update_conflict_resolution(self, conflictTime, conflictType, resolution):
         '''Update resolution by time and type of conflict
 
@@ -436,9 +400,6 @@ class DatabaseQuery:
             resolution: str, new value for resolution
         '''
         try:
-            print("I'm in update")
-            print(conflictTime)
-            print(conflictType)
             self.cursor.execute("UPDATE conflicts SET resolution = %s WHERE conflictTime = %s AND conflictType = %s", (resolution, conflictTime, conflictType))
             self.db.commit()
         except LookupError as le:

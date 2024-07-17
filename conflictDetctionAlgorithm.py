@@ -2,7 +2,6 @@ from classActivityHandler import ActivityHandler
 from classActionConstraints import ActionConstraints
 from classConflictDetectionEngine import ConflictDetectionEngine
 
-# The class defines all the content of an event activity
 class Activity:
     '''Data associated with an event activity
 
@@ -34,7 +33,6 @@ class Activity:
             return "Error in Type matching !!\n" + str(te)
 
 
-# Main program that extracts event logs, creates object and detects conflicts uisng detection engine
 def detectmain(logdata, actionConstraints):
     '''Detect which activities in logs are conflicts.
 
@@ -52,7 +50,7 @@ def detectmain(logdata, actionConstraints):
         conflictDetectionEngine = ConflictDetectionEngine()
 
         result = []
-        # Create an Activity and ActivityHandler for each activity and check for the conflict
+        # Create an Activity and ActivityHandler for each activity and check for a conflict
         for activity in logdata:
             activityObject = Activity(activity)
             Handler = ActivityHandler()

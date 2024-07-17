@@ -1,4 +1,3 @@
-# The class extracts all the action constaints related to the activity object
 class ActionConstraints:
     '''Parse action constraints and store those matching an Activity's document id
 
@@ -13,26 +12,6 @@ class ActionConstraints:
         self.actionConstraints = {}
         self.generateConstraints(self.activityObj.documentID, actionConstraints)
         
-
-    # The getConstaints creates an object to handle action constraints of a particular document ID
-    # constraintsObj = {
-    #                       action1: 
-    #                           {
-    #                               actionType1: 
-    #                                   {
-    #                                       target:[val,comp,true_val]
-    #                                   }, 
-    #                               actionType2 :
-    #                                   {
-    #                                       .
-    #                                   }
-    #                           }, 
-    #                       action2:
-    #                            .
-    #                            .
-    #                   }
-
-    # Fetch the action constraints from the database
     def generateConstraints(self, documentID, actionConstraints):
         '''Filter action constraints by doc id and initialize self.actionConstraints
 

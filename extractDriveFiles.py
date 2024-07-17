@@ -48,10 +48,7 @@ def getDomainUserList(service):
 
 def getUserID(service, fileID, email):
     '''Get the user ID for a user with permissions on a file'''
-    # List permissions for the file
     permissions = service.permissions().list(fileId=fileID, fields="*").execute()
-
-    # Print the ID and email address for each user permission
     for permission in permissions.get('permissions', []):
         if(permission['emailAddress'] == email):
             return permission['id']

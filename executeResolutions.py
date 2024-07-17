@@ -32,10 +32,8 @@ class ExecuteResolutionThread():
 
     def run(self):
         '''Thread main: choose and execute correct resolution'''
-        # Execute your long-running task here
         val = False
         if(self.action == "Permission Change"):
-            print("I'm PC Ex")
             val =  self.permissionChangeResolutions()  
         elif(self.action == "Edit"):
             pass
@@ -48,7 +46,6 @@ class ExecuteResolutionThread():
 
         return val
 
-    # Method to handle resolutions related to permission change 
     def permissionChangeResolutions(self):
         '''Resolve a permissions-related conflict by reverting changes'''
         try:
@@ -59,7 +56,6 @@ class ExecuteResolutionThread():
             fromAction = actionSplit[2].split('-')[0]
             user = actionSplit[3]
             userID = getUserID(self.driveAPIservice, self.documentId, user)
-            print("I'm PC Ex1")
             if('none' in fromAction and 'none' not in toAction):
                 actionType = "Remove Permission"
             elif('none' not in fromAction and 'none' in toAction):
@@ -80,9 +76,6 @@ class ExecuteResolutionThread():
                 new_role = "commenter"
             else:
                 new_role = "reader"
-            
-            # # Perform action only when action constaint is not present
-            # if(self.check_action_constraint(fileID, action, actionType, self.email)):
 
             # Perform permission Change action based on the input arguments
             match actionType:
@@ -98,7 +91,6 @@ class ExecuteResolutionThread():
 
                 case "Remove Permission":
                     # Remove the user ID from the file permissions
-                    print("I'm PC Ex2")
                     self.driveAPIservice.permissions().delete(fileId=fileID, permissionId = userID).execute()
                     return True
 

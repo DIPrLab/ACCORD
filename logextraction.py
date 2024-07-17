@@ -49,7 +49,6 @@ def extractDriveLog(lastLogTime, service):
         if not activities:
             print('No activities found.')
         else:
-            #print('Activity Logs:')
             for activity in activities:
                 activityTime = activity['id']['time']
                 actorID = list(activity['actor'].values())
@@ -107,10 +106,6 @@ def extractDriveLog(lastLogTime, service):
 
         return logString
 
-        ############# Format of each item in log String #############
-        # [timestamp, action, doc_id, doc_name, actor_id, actor_name]
-        #############################################################
-
     except LookupError as le:
         return "Error in the key or index !!\n" + str(le)
     except ValueError as ve:
@@ -118,9 +113,5 @@ def extractDriveLog(lastLogTime, service):
     except OSError as oe:
         return "Error! " + str(oe)
 
-
-
-###########################################################################################################
-### Uncomment the following script for debugging purpose
-
+# Uncomment the following script for debugging purpose
 #print(extractDriveLog('2022-10-20T16:16:35.282Z'))

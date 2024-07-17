@@ -7,7 +7,6 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-# Get Credentials for interacting using corresponding scopes and API
 def get_creds(SCOPES, filename):
     '''Initialize Credentials from file
 
@@ -51,7 +50,6 @@ def create_reportsAPI_service():
         SCOPES = ['https://www.googleapis.com/auth/admin.reports.audit.readonly']
         creds = get_creds(SCOPES, 'token.json')
         service = build('admin', 'reports_v1', credentials=creds)
-
         return service
 
     except LookupError as le:
@@ -68,7 +66,6 @@ def create_driveAPI_service():
         SCOPES = ['https://www.googleapis.com/auth/drive']
         creds = get_creds(SCOPES, 'token_drive.json')
         service = build('drive', 'v3', credentials=creds)
-
         return service
 
     except LookupError as le:
@@ -87,7 +84,6 @@ def create_user_driveAPI_service(user_token_name):
         user_token_name = 'tokens/' + user_token_name
         creds = get_creds(SCOPES, user_token_name)
         service = build('drive', 'v3', credentials=creds)
-
         return service
 
     except LookupError as le:
@@ -103,7 +99,6 @@ def create_directoryAPI_service():
         SCOPES = ['https://www.googleapis.com/auth/admin.directory.user']
         creds = get_creds(SCOPES, 'token_directory.json')
         service = build('admin', 'directory_v1', credentials=creds)
-
         return service
 
     except LookupError as le:
@@ -112,9 +107,7 @@ def create_directoryAPI_service():
         return "Error in Value Entered !!\n" + str(ve)
     except OSError as oe:
         return "Error! " + str(oe)
-    
 
-# Get credentials and SCOPE for creating simulator Services
 def create_simulator_driveAPI_service(user_token_name):
     '''Create Drive API v3 service with user's credentials'''
     try:
@@ -123,7 +116,6 @@ def create_simulator_driveAPI_service(user_token_name):
         user_token_name = 'tokens/' + user_token_name
         creds = get_creds(SCOPES, user_token_name)
         service = build('drive', 'v3', credentials=creds)
-
         return service
 
     except LookupError as le:
