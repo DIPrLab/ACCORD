@@ -3,7 +3,16 @@ import sys, time, psutil
 from extractDriveFiles import getUserID
 
 class ExecuteResolutionThread():
+    '''Execute a conflict resolution
 
+    Attributes:
+        activityTime: str, datetime
+        activity: str, full description of activity, format specific to action
+        action: str, action type of resolution (action that caused conflict)
+        documentId: str, doc to perform resolution on
+        actor: str
+        driveAPIservice: Resource object for user's Drive API Service
+    '''
     def __init__(self, activityTime, activity, documentId, actor, drive_service):
         try:
             super(ExecuteResolutionThread,self).__init__()
@@ -22,7 +31,7 @@ class ExecuteResolutionThread():
             return("Error in Type matching !!\n" + str(te))        
 
     def run(self):
-               
+        '''Thread main: choose and execute correct resolution'''
         # Execute your long-running task here
         val = False
         if(self.action == "Permission Change"):
@@ -38,9 +47,10 @@ class ExecuteResolutionThread():
             pass
 
         return val
-          
+
     # Method to handle resolutions related to permission change 
     def permissionChangeResolutions(self):
+        '''Resolve a permissions-related conflict by reverting changes'''
         try:
             fileID = self.documentId
             actionSplit = self.activity.split(':')
@@ -56,7 +66,6 @@ class ExecuteResolutionThread():
                 actionType = "Add Permission"
             else:
                 actionType = "Update Permission"
-            
 
             if('edit' in  fromAction):
                 old_role = "writer"
@@ -64,7 +73,7 @@ class ExecuteResolutionThread():
                 old_role = "commenter"
             else:
                 old_role = "reader"
-            
+
             if('edit' in  toAction):
                 new_role = "writer"
             elif('comment' in toAction):
@@ -99,12 +108,11 @@ class ExecuteResolutionThread():
                     new_permission = {'role' : new_user_role }
                     self.driveAPIservice.permissions().update(fileId=fileID, permissionId = userID, body=new_permission).execute()
                     return True
-                
+
                 case _:
                     pass
-                
-            return False
 
+            return False
 
         except LookupError as le:
             return("Error in the key or index !!\n" + str(le))

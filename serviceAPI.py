@@ -9,6 +9,14 @@ from googleapiclient.discovery import build
 
 # Get Credentials for interacting using corresponding scopes and API
 def get_creds(SCOPES, filename):
+    '''Initialize Credentials from file
+
+    Args:
+        SCOPES: str, OAuth 2.0 scopes URI specifying app, data, & access level
+        filename: str, JSON tokens file relative path
+
+    Returns: google.oauth2.credentials.Credentials
+    '''
     try:
         creds = None
         # The file token.json stores the user's access and refresh tokens, and is created after first time
@@ -37,6 +45,7 @@ def get_creds(SCOPES, filename):
 
 
 def create_reportsAPI_service():
+    '''Create Admin Reports API v1 service with admin's credentials'''
     try:
         # If modifying these scopes, delete the file token.json.
         SCOPES = ['https://www.googleapis.com/auth/admin.reports.audit.readonly']
@@ -53,6 +62,7 @@ def create_reportsAPI_service():
         return "Error! " + str(oe)
 
 def create_driveAPI_service():
+    '''Create Drive API v3 service with admin's credentials'''
     try:
         # If modifying these scopes, delete the file token.json.
         SCOPES = ['https://www.googleapis.com/auth/drive']
@@ -69,6 +79,7 @@ def create_driveAPI_service():
         return "Error! " + str(oe)
 
 def create_user_driveAPI_service(user_token_name):
+    '''Create Drive API v3 service with user's credentials'''
     try:
         user_token_name = 'token_'+user_token_name+'.json'
         # If modifying these scopes, delete the file token.json.
@@ -87,6 +98,7 @@ def create_user_driveAPI_service(user_token_name):
         return "Error! " + str(oe)
 
 def create_directoryAPI_service():
+    '''Create Admin Directory API v1 service with admin's credentials'''
     try:
         SCOPES = ['https://www.googleapis.com/auth/admin.directory.user']
         creds = get_creds(SCOPES, 'token_directory.json')
@@ -104,6 +116,7 @@ def create_directoryAPI_service():
 
 # Get credentials and SCOPE for creating simulator Services
 def create_simulator_driveAPI_service(user_token_name):
+    '''Create Drive API v3 service with user's credentials'''
     try:
         # If modifying these scopes, delete the file token.json.
         SCOPES = ['https://www.googleapis.com/auth/drive']
