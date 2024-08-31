@@ -4,12 +4,13 @@ import yaml, hashlib, os, time, random, re
 from datetime import datetime
 from math import floor
 from functools import wraps
+
 from serviceAPI import create_user_driveAPI_service, create_directoryAPI_service, create_reportsAPI_service
-from detection import get_filteroptions
-from conflictDetctionAlgorithm import detectmain
+from detection import detectmain
 from sqlconnector import DatabaseQuery
 from activitylogs import Logupdater
 from demosimulator import UserSubject, PerformActions
+from extractDriveFiles import getFileList, getDomainUserList
 from logextraction import extractDriveLog
 from executeResolutions import ExecuteResolutionThread
 
@@ -68,6 +69,24 @@ def process_logs(logV):
             return f'{actor} has updated permissions for {user} from {permissions.get(second_sub_part)} to {permissions.get(first_sub_part)}'
     else:
         return " ".join(logV)
+
+def get_filteroptions(driveAPI_service, directoryAPI_service):
+    '''Generate lists of options for UI comboboxes using services
+
+    Returns: two lists, one of filenames and one of domain users'''
+    # Set up Fields of Documents ComboBox
+    fileList = ["Any"]
+    files, fids = getFileList(driveAPI_service)
+    if(len(files) > 0):
+        fileList.extend(files)
+
+    # Set up fields for Actors ComboBox
+    actorList = ["Any"]
+    users = getDomainUserList(directoryAPI_service)
+    if(len(users) > 0):
+        actorList.extend(users)
+
+    return actorList, fileList
 
 ## Route to ensure there is no going back and cache is cleared
 @app.after_request
@@ -221,25 +240,17 @@ def refresh_logs():
 # Routes for conflict detection
 @app.route('/detect_conflicts_demo', methods=['POST'])
 def detect_conflicts_demo():
-    '''Detect function for demo: Detect conflicts in logs since 'current_date''''
+    '''Detect function for demo: Detect conflicts in logs since 'current_date'''
     currentDateTime = request.form.get('current_date')
 
     # Extract Logs from databse with the filter parameters and also extract all the action constraints
     db = DatabaseQuery(mysql.connection, mysql.connection.cursor())
     logs = db.extract_logs_date(currentDateTime)
-    actionConstraintsList = db.extract_action_constraints("LIKE '%'")
+    actionConstraints = db.extract_action_constraints("LIKE '%'")
     del db
 
-    # Create a Dictionary of action constraitns with key as documentID
-    actionConstraints = {}
-    for constraint in actionConstraintsList:
-        if(constraint[1] not in actionConstraints):
-            actionConstraints[constraint[1]] = [constraint]
-        else:
-            actionConstraints[constraint[1]].append(constraint)
-
     conflictID = []
-    if(logs != None and len(logs)>1):
+    if logs != None and len(logs) > 1:
         
         # Initializing and setting user view parameters
         headers = logs.pop(0)
@@ -411,7 +422,7 @@ def fetch_task_content():
     action = data['action']
     addConstraint = data['addConstraint']
     constraintType = data['constraintType']
-        actionIndex = int(data['actionIndex'])
+    actionIndex = int(data['actionIndex'])
     fileID = data['fileID']
     if(fileID == 'None'):
         fileID = None
@@ -457,9 +468,9 @@ def fetch_task_content():
 
         if(action == "Edit" and constraintType == "Time Limit Edit"):
             current_datetime = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-            constraints = [document_name, fileID, action, constraintType, actor.userEmail, "TRUE", "lt",owner.userEmail, current_datetime]
+            constraints = [document_name, fileID, action, constraintType, actor.userEmail, "", "lt", owner.userEmail, current_datetime]
         else:
-            constraints = [document_name, fileID, action, constraintType, actor.userEmail, "FALSE", "eq", owner.userEmail, '-']
+            constraints = [document_name, fileID, action, constraintType, actor.userEmail, "", "", owner.userEmail, ""]
         db.add_action_constraint(constraints)
 
         owner_userName = owner.userName.split('@')[0].capitalize()
@@ -489,7 +500,7 @@ def fetch_task_content():
             constraint = f'{owner_userName} has set a constraint on {document_name} for user {actor_userName} from deleting the resource'
 
         else:
-            constraint = f'{owner_userName} has set a constraint on {document_name} for user {actor_userName} from creating additional resources'
+            constraint = f'{owner_userName} has set a constraint on {document_name} for user {actor_userName} of type {constraintType}'
 
         time.sleep(3)
 
@@ -536,7 +547,7 @@ def add_action_constraints():
                 continue  # Skip unknown action types
 
             # Example: This is where you would call your database method
-            constraints = [file_name, file_id, constraint_action, constraint_type, target_user, "FALSE", "eq", owner, '-']
+            constraints = [file_name, file_id, constraint_action, constraint_type, target_user, "", "", owner, '']
             
             # Adding constraint to the databse
             db = DatabaseQuery(mysql.connection, mysql.connection.cursor())
@@ -571,24 +582,23 @@ def fetch_action_constraints():
         }
 
         # Determine the Constraint value based on Action Value and Action Type
-        if action_value == "FALSE":
-            if action_type == "Add Permission":
-                constraint_value = "Cannot Add users"
-            elif action_type == "Remove Permission":
-                constraint_value = "Cannot Remove users"
-            elif action_type == "Update Permission":
-                constraint_value = "Cannot Update user Permissions"
-            elif action_type == "Can Move":
-                constraint_value = "Cannot Move file"
-            elif action_type == "Can Delete":
-                constraint_value = "Cannot Delete the file"
-            elif action_type == "Can Edit":
-                constraint_value = "Cannot Edit file"
-            else:
-                constraint_value = "Undefined Action"  # Default message if no specific action type matched
+        if action_type == "Add Permission":
+            constraint_value = "Cannot Add users"
+        elif action_type == "Remove Permission":
+            constraint_value = "Cannot Remove users"
+        elif action_type == "Update Permission":
+            constraint_value = "Cannot Update user Permissions"
+        elif action_type == "Can Move":
+            constraint_value = "Cannot Move file"
+        elif action_type == "Can Delete":
+            constraint_value = "Cannot Delete the file"
+        elif action_type == "Can Edit":
+            constraint_value = "Cannot Edit file"
+        elif action_type == "Time Limit Edit":
+            constraint_value = "Time constraint on Edit"
         else:
-            constraint_value = "No restriction"  # Default message if action value is not "FALSE"
-
+            constraint_value = "Undefined Action"  # Default message if no specific action type matched
+        
         # Set the 'Constraint' key in the dictionary
         constraint_dict['Constraint'] = constraint_value
 
