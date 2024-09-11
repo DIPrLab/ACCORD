@@ -3,7 +3,16 @@ import sys, time, psutil
 from extractDriveFiles import getUserID
 
 class ExecuteResolutionThread():
+    '''Execute a conflict resolution
 
+    Attributes:
+        activityTime: str, datetime
+        activity: str, full description of activity, format specific to action
+        action: str, action type of resolution (action that caused conflict)
+        documentId: str, doc to perform resolution on
+        actor: str
+        driveAPIservice: Resource object for user's Drive API Service
+    '''
     def __init__(self, activityTime, activity, documentId, actor, drive_service):
         try:
             super(ExecuteResolutionThread,self).__init__()
@@ -22,11 +31,9 @@ class ExecuteResolutionThread():
             return("Error in Type matching !!\n" + str(te))        
 
     def run(self):
-               
-        # Execute your long-running task here
+        '''Thread main: choose and execute correct resolution'''
         val = False
         if(self.action == "Permission Change"):
-            print("I'm PC Ex")
             val =  self.permissionChangeResolutions()  
         elif(self.action == "Edit"):
             pass
@@ -38,9 +45,9 @@ class ExecuteResolutionThread():
             pass
 
         return val
-          
-    # Method to handle resolutions related to permission change 
+
     def permissionChangeResolutions(self):
+        '''Resolve a permissions-related conflict by reverting changes'''
         try:
             fileID = self.documentId
             actionSplit = self.activity.split(':')
@@ -49,14 +56,12 @@ class ExecuteResolutionThread():
             fromAction = actionSplit[2].split('-')[0]
             user = actionSplit[3]
             userID = getUserID(self.driveAPIservice, self.documentId, user)
-            print("I'm PC Ex1")
             if('none' in fromAction and 'none' not in toAction):
                 actionType = "Remove Permission"
             elif('none' not in fromAction and 'none' in toAction):
                 actionType = "Add Permission"
             else:
                 actionType = "Update Permission"
-            
 
             if('edit' in  fromAction):
                 old_role = "writer"
@@ -64,16 +69,13 @@ class ExecuteResolutionThread():
                 old_role = "commenter"
             else:
                 old_role = "reader"
-            
+
             if('edit' in  toAction):
                 new_role = "writer"
             elif('comment' in toAction):
                 new_role = "commenter"
             else:
                 new_role = "reader"
-            
-            # # Perform action only when action constaint is not present
-            # if(self.check_action_constraint(fileID, action, actionType, self.email)):
 
             # Perform permission Change action based on the input arguments
             match actionType:
@@ -89,7 +91,6 @@ class ExecuteResolutionThread():
 
                 case "Remove Permission":
                     # Remove the user ID from the file permissions
-                    print("I'm PC Ex2")
                     self.driveAPIservice.permissions().delete(fileId=fileID, permissionId = userID).execute()
                     return True
 
@@ -99,12 +100,11 @@ class ExecuteResolutionThread():
                     new_permission = {'role' : new_user_role }
                     self.driveAPIservice.permissions().update(fileId=fileID, permissionId = userID, body=new_permission).execute()
                     return True
-                
+
                 case _:
                     pass
-                
-            return False
 
+            return False
 
         except LookupError as le:
             return("Error in the key or index !!\n" + str(le))
