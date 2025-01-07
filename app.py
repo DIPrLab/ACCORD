@@ -227,6 +227,7 @@ def user_dashboard():
         return redirect(url_for('login'))
 
 # Routes for activity logs
+# This is called by the application once when the user stops the monitoring
 @app.route('/refresh_logs', methods=['POST'])
 def refresh_logs():
     '''Fetch activity logs & update database. Returns number of logs in response'''
@@ -406,6 +407,7 @@ def simulate_actions():
 
     return jsonify({'success': True, 'actions': action_log})
 
+# Dead route--not actively used by any script 11/21/24
 @app.route('/fetch_task_content', methods=['POST'])
 def fetch_task_content():
     '''Simulator: Perform appropriate action on Drive resources
@@ -608,6 +610,8 @@ def fetch_action_constraints():
     return jsonify(processed_constraints)
 
 ############## Route to fetch Drive Log ##########################
+# This is run periodically to fetch and display the latest logs to the user.
+# It DOES not store them in the database
 @app.route('/fetch_drive_log', methods=['GET'])
 def fetch_drive_log():
     '''Fetch activity logs since specified time.'''
@@ -625,7 +629,7 @@ def fetch_drive_log():
         if(len(activity_logs) > 1):
             activity_logs.pop(0)
             for logitem in reversed(activity_logs):
-                logV = logitem.split('\t*\t')
+                logV = logitem.split(',')
                 totalLogs.append({'time':simplify_datetime(logV[0]), 'activity':process_logs(logV), 'actor': logV[5].split('@')[0].capitalize(), 'resource':logV[3]})
 
     del db
